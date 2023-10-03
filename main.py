@@ -146,7 +146,7 @@ def img(message):
                          reply_to_message_id=message.message_id)
 
   if message.text == '/img':
-    warn = f" Please Send Prompt : /img <PROMPT> "
+    warn = " Please Send Prompt : /img <PROMPT> "
     bot.edit_message_text(chat_id=message.chat.id,
                           message_id=msg.message_id,
                           text=warn,
@@ -202,16 +202,16 @@ def art_bing(message):
                          reply_to_message_id=message.message_id)
 
   if message.text == '/art':
-    warn = f" Please Send Prompt : /art <PROMPT> "
+    warn = " Please Send Prompt : /art <PROMPT> "
     bot.edit_message_text(chat_id=message.chat.id,
                           message_id=msg.message_id,
                           text=warn,
                           parse_mode='Markdown')
 
   def generate_images(auth_cookie: str,
-                      prompt: str,
-                      all_cookies: List[Dict] = None,
-                      output_folder: str = "") -> List[str]:
+                        prompt: str,
+                        all_cookies: List[Dict] = None,
+                        output_folder: str = "") -> List[str]:
     """
       Generates image links using Microsoft Bing.
       Parameters:
@@ -225,7 +225,7 @@ def art_bing(message):
       Returns:
           List[str]: List of image links
       """
-    if os.environ.get("BING_URL") == None:
+    if os.environ.get("BING_URL") is None:
       BING_URL = "https://www.bing.com"
     else:
       BING_URL = os.environ.get("BING_URL")
@@ -332,7 +332,7 @@ def art_bing(message):
         if response.status_code != 200:
           raise Exception(error_noresults)
 
-        if not response.text or response.text.find("errorMessage") != -1:
+        if not response.text or "errorMessage" in response.text:
           time.sleep(1)
           continue
         else:
@@ -440,7 +440,7 @@ def art_bing(message):
     # Send the media group
     bot.send_media_group(message.chat.id, media_group)
 
-    info = f"✅ Process Complete..."
+    info = "✅ Process Complete..."
     bot.edit_message_text(chat_id=message.chat.id,
                           message_id=msg.message_id,
                           text=info,
@@ -524,8 +524,7 @@ def bard_chat(message):
   if len(json_chat_data) >= 3:
     if len(json_chat_data[4][0]) >= 4:
       if json_chat_data[4][0][4]:
-        for img in json_chat_data[4][0][4]:
-          images.append(img[0][0][0])
+        images.extend(img[0][0][0] for img in json_chat_data[4][0][4])
   results = {
     "content": json_chat_data[4][0][1][0],
     "conversation_id": json_chat_data[1][0],
@@ -588,90 +587,91 @@ block_words = ['/art', '/help', '/bard', '/img']
 
 @bot.message_handler(content_types=['text'])
 def cha_gpt_cus(message):
-  if message.chat.type in ['private', 'supergroup', 'group']:
-    if not any(word in message.text for word in block_words):
-      bot.send_chat_action(message.chat.id, "typing")
-      username = message.from_user.username
-      print("@", username)
-      msg = bot.send_message(message.chat.id,
-                             "🌀 Processing...",
-                             reply_to_message_id=message.message_id)
-      prompt = message.text
+  if message.chat.type not in ['private', 'supergroup', 'group']:
+    return
+  if all(word not in message.text for word in block_words):
+    bot.send_chat_action(message.chat.id, "typing")
+    username = message.from_user.username
+    print("@", username)
+    msg = bot.send_message(message.chat.id,
+                           "🌀 Processing...",
+                           reply_to_message_id=message.message_id)
+    prompt = message.text
 
-      inputs.append(prompt)
+    inputs.append(prompt)
 
-      search = DuckDuckGoSearchRun()
+    search = DuckDuckGoSearchRun()
 
-      Internet_Current_Search = search.run(prompt)
+    Internet_Current_Search = search.run(prompt)
 
-      print(Internet_Current_Search)
+    print(Internet_Current_Search)
 
-      outputs.append(Internet_Current_Search)
+    outputs.append(Internet_Current_Search)
 
-      #https://chatgpt.hungchongki3984.workers.dev/v1/chat/completions
+    #https://chatgpt.hungchongki3984.workers.dev/v1/chat/completions
 
-      url = "https://api.openai.com/v1/chat/completions"
+    url = "https://api.openai.com/v1/chat/completions"
 
-      headers = {
-        "Authorization":
-        f"Bearer {open_api}",
-        "Content-Type":
-        "application/json",
-        "User-Agent":
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36 Edg/114.0.1823.82"
-      }
+    headers = {
+      "Authorization":
+      f"Bearer {open_api}",
+      "Content-Type":
+      "application/json",
+      "User-Agent":
+      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36 Edg/114.0.1823.82"
+    }
 
-      data = {
-        "model":
-        "gpt-3.5-turbo-16k",
-        "messages": [
-          {
-            "role":
-            "system",
-            "content":
-            f""" Your name is MULTI GPT. You are a language model with access to the Internet. Knowledge cutoff: September 2021. Current date and time: {time.strftime("%A, %d %B %Y, %I:%M %p UTC%z")}."""
-            .strip(),
-          },
-          {
-            "role": "user",
-            "content": prompt
-          },
-          {
-            "role":
-            "assistant",
-            "content":
-            f'You are an assistant to a human, powered by a large language model trained by OpenAI.\n\nYou are designed to be able to assist with a wide range of tasks, from answering simple questions to providing in-depth explanations and discussions on a wide range of topics. As a language model, you are able to generate human-like text based on the input you receive, allowing you to engage in natural-sounding conversations and provide responses that are coherent and relevant to the topic at hand.\n\nYou are constantly learning and improving, and your capabilities are constantly evolving. You are able to process and understand large amounts of text, and can use this knowledge to provide accurate and informative responses to a wide range of questions. You have access to some personalized information provided by the human in the Context section below. Additionally, you are able to generate your own text based on the input you receive, allowing you to engage in discussions and provide explanations and descriptions on a wide range of topics.\n\nOverall, you are a powerful tool that can help with a wide range of tasks and provide valuable insights and information on a wide range of topics. Whether the human needs help with a specific question or just wants to have a conversation about a particular topic, you are here to assist.\n\nContext:\n{outputs}\n\nCurrent conversation:\n{inputs}\nLast line\nYou:'
-          },
-        ],
-      }
+    data = {
+      "model":
+      "gpt-3.5-turbo-16k",
+      "messages": [
+        {
+          "role":
+          "system",
+          "content":
+          f""" Your name is MULTI GPT. You are a language model with access to the Internet. Knowledge cutoff: September 2021. Current date and time: {time.strftime("%A, %d %B %Y, %I:%M %p UTC%z")}."""
+          .strip(),
+        },
+        {
+          "role": "user",
+          "content": prompt
+        },
+        {
+          "role":
+          "assistant",
+          "content":
+          f'You are an assistant to a human, powered by a large language model trained by OpenAI.\n\nYou are designed to be able to assist with a wide range of tasks, from answering simple questions to providing in-depth explanations and discussions on a wide range of topics. As a language model, you are able to generate human-like text based on the input you receive, allowing you to engage in natural-sounding conversations and provide responses that are coherent and relevant to the topic at hand.\n\nYou are constantly learning and improving, and your capabilities are constantly evolving. You are able to process and understand large amounts of text, and can use this knowledge to provide accurate and informative responses to a wide range of questions. You have access to some personalized information provided by the human in the Context section below. Additionally, you are able to generate your own text based on the input you receive, allowing you to engage in discussions and provide explanations and descriptions on a wide range of topics.\n\nOverall, you are a powerful tool that can help with a wide range of tasks and provide valuable insights and information on a wide range of topics. Whether the human needs help with a specific question or just wants to have a conversation about a particular topic, you are here to assist.\n\nContext:\n{outputs}\n\nCurrent conversation:\n{inputs}\nLast line\nYou:'
+        },
+      ],
+    }
 
-      response = requests.post(url, headers=headers, json=data)
+    response = requests.post(url, headers=headers, json=data)
 
-      rich.print(response.json())
+    rich.print(response.json())
 
-      # rich.print(json.dumps(response.json(), indent=4, sort_keys=False))
+    # rich.print(json.dumps(response.json(), indent=4, sort_keys=False))
 
-      info = "🟡 Processing..."
+    info = "🟡 Processing..."
 
-      bot.edit_message_text(chat_id=message.chat.id,
-                            message_id=msg.message_id,
-                            text=info)
+    bot.edit_message_text(chat_id=message.chat.id,
+                          message_id=msg.message_id,
+                          text=info)
 
-      ob = response.json()
+    ob = response.json()
 
-      outputs.append(ob)
+    outputs.append(ob)
 
-      output = response.json()['choices'][0]['message']['content']
+    output = response.json()['choices'][0]['message']['content']
 
-      splitted_text = util.smart_split(output, chars_per_string=3000)
-      for text in splitted_text:
-        bot.send_message(message.from_user.id, text, parse_mode='Markdown')
-      info = """✅ Process Completed ...\n\n @%s """ % message.from_user.username
-      bot.edit_message_text(
-        chat_id=message.chat.id,
-        message_id=msg.message_id,
-        text=info,
-      )
+    splitted_text = util.smart_split(output, chars_per_string=3000)
+    for text in splitted_text:
+      bot.send_message(message.from_user.id, text, parse_mode='Markdown')
+    info = """✅ Process Completed ...\n\n @%s """ % message.from_user.username
+    bot.edit_message_text(
+      chat_id=message.chat.id,
+      message_id=msg.message_id,
+      text=info,
+    )
 
 
 functions = [welcome, cha_gpt_cus, art_bing, bard_chat, img]
